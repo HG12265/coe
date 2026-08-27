@@ -1,0 +1,896 @@
+using System;
+using CrystalDecisions.CrystalReports.Engine;
+using CrystalDecisions.Windows.Forms;
+using CrystalDecisions.Shared;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.OleDb;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.IO;
+using ConsolidateMarkSheetApp.Classes;
+
+
+namespace ConsolidateMarkSheetApp
+{
+    public partial class consol : Form
+    {
+        ReportDocument CryRepPdf = new ReportDocument();
+        clsFunctions Obj = new clsFunctions();
+        string sqlstr = null;
+        string sqlstr1 = null;
+        OleDbCommand cmd = new OleDbCommand();
+
+        public consol()
+        {
+            InitializeComponent();
+        }
+
+        private void consol_Load(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Maximized;
+            //Obj.MultiColumComboLoad(mCollegeCode, "Select Colcode,ColName from Col_Mast Order by ColCode", "ColCode", "ColCode", clsVariables.CnnReg);
+            //Obj.MultiColumComboLoad(mYrOfPass, "Select Distinct YR_OF_PASS from ALL_RES_PG_COMPLETE Order by YR_OF_PASS", "YR_OF_PASS", "YR_OF_PASS", clsVariables.CnnReg);
+
+            Obj.MultiColumComboLoad(mCollegeCode, "Select DISTINCT Colcode from LOAD_BULK Order by ColCode", "ColCode", "ColCode", clsVariables.CnnReg);
+
+            // Obj.MultiColumComboLoad(mYrOfPass, "Select Distinct YR_OF_PASS from ALL_RES_PG_COMPLETE Order by YR_OF_PASS", "YR_OF_PASS", "YR_OF_PASS", clsVariables.CnnReg);
+        }
+
+        private void butShowList_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                //  lblline1.Text = clsFunctions.Get_Where_String("Col_Mast", "ColCode", mCollegeCode.Text.ToString(), "ColName", clsVariables.CnnReg);
+
+                //  Load_Dg();
+            }
+            catch (Exception ex)
+            { MessageBox.Show(ex.ToString()); }
+        }
+
+        private void Load_Dg()
+        {
+
+            if (txtRegNo1.Text != "")
+            {
+
+                DataTable items = new DataTable();
+                DataRow dr;
+
+                items.Columns.Add(new DataColumn("Select", typeof(Boolean)));
+                items.Columns.Add(new DataColumn("Reg_No", typeof(string)));
+                items.Columns.Add(new DataColumn("Name", typeof(string)));
+                items.Columns.Add(new DataColumn("D.O.B", typeof(string)));
+                items.Columns.Add(new DataColumn("Degree", typeof(string)));
+                items.Columns.Add(new DataColumn("CollegeCode", typeof(string)));
+                items.Columns.Add(new DataColumn("CollegeName", typeof(string)));
+                //   items.Columns.Add(new DataColumn("Yr_Of_App", typeof(string)));
+                //     items.Columns.Add(new DataColumn("Pub_Code", typeof(string)));
+                //    items.Columns.Add(new DataColumn("Pub_Date", typeof(string)));
+                //    items.Columns.Add(new DataColumn("Patt_Exam", typeof(string)));
+
+                //   sqlstr = "Select Reg_no From ALL_RES_PG_COMPLETE where ColCode='" + mCollegeCode.Text.ToString() + "' and Mid(Degree,1,1)='B' Order By Reg_No";
+                sqlstr = "Select  distinct reg_no,colcode,degree From SM_ALL where Reg_no='" + txtRegNo1.Text + "' ";
+
+                //sqlstr = "Select * From ALL_RES_PG_COMPLETE where Reg_no='" + txtRegNo1.Text + "' and YR_OF_PASS='" + mYrOfPass.Text.ToString() + "'and WH is null";
+
+                cmd = new OleDbCommand(sqlstr, clsVariables.CnnRpt);
+                OleDbDataReader Rs;
+                Rs = cmd.ExecuteReader();
+
+                while (Rs.Read())
+                {
+                    //  String id = mYrOfPass.Text.ToString();
+
+                    dr = items.NewRow();
+                    dr["Select"] = true;
+                    dr["Reg_No"] = Rs["Reg_No"].ToString();
+                    //dr["Name"] = Rs["Name"].ToString();
+                    dr["Name"] = clsFunctions.Get_Where_String("GAL_MAST", "Reg_No", Rs["Reg_No"].ToString(), "Name", clsVariables.CnnReg);
+                    dr["D.O.B"] = clsFunctions.Get_Where_String("GAL_MAST", "Reg_No", Rs["Reg_No"].ToString(), "DOB", clsVariables.CnnReg);
+                    // dr["D.O.B"] = DateTime.Parse(Rs["DOB"].ToString()).ToString("dd/MM/yyyy");  
+                    dr["Degree"] = clsFunctions.Get_Where_String("Deg_Mast", "Degree", Rs["Degree"].ToString(), "Deg_Name", clsVariables.CnnReg);
+                    dr["CollegeCode"] = clsFunctions.Get_Where_String("col_Mast", "colcode", Rs["colcode"].ToString(), "COLCODE", clsVariables.CnnReg);
+                    dr["CollegeName"] = clsFunctions.Get_Where_String("col_Mast", "colcode", Rs["colcode"].ToString(), "COLNAME", clsVariables.CnnReg);
+                    //   dr["Yr_Of_App"] = clsFunctions.Get_Value("Select  Yr_Of_App from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                    //    dr["Pub_Code"] = clsFunctions.Get_Value("Select  Pub_Code from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                    //   dr["Pub_Date"] = clsFunctions.Get_Value("Select  Pub_Date from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                    //    dr["Patt_Exam"] = clsFunctions.Get_Where_String("Deg_Mast", "Degree", Rs["Degree"].ToString(), "Pattern_Exam", clsVariables.CnnReg);
+                    items.Rows.Add(dr);
+
+                }
+                dg.DataSource = items;
+                Rs.Close();
+                cmd.Dispose();
+
+                DataGridViewColumn column1 = dg.Columns[0];//Screen Name           
+                DataGridViewColumn column2 = dg.Columns[1];//Add        
+                column2.ReadOnly = true;
+                DataGridViewColumn column3 = dg.Columns[2];//Edit            
+                column3.ReadOnly = true;
+                DataGridViewColumn column4 = dg.Columns[3];//Delete            
+                column4.ReadOnly = true;
+                DataGridViewColumn column5 = dg.Columns[4];//View
+                column5.ReadOnly = true;
+                DataGridViewColumn column6 = dg.Columns[5];//View
+                column6.ReadOnly = true;
+                DataGridViewColumn column7 = dg.Columns[6];//View
+                column7.ReadOnly = true;
+                //  DataGridViewColumn column8 = dg.Columns[7];//View
+                //  column8.ReadOnly = true;
+                //  DataGridViewColumn column9 = dg.Columns[8];//View
+                //   column9.ReadOnly = true;
+                //   DataGridViewColumn column10 = dg.Columns[9];//View
+                //  column10.ReadOnly = true;
+                //  DataGridViewColumn column11 = dg.Columns[10];//View
+                //   column11.ReadOnly = true;
+
+
+                column1.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column2.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column3.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column4.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column5.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column6.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column7.SortMode = DataGridViewColumnSortMode.NotSortable;
+                // column8.SortMode = DataGridViewColumnSortMode.NotSortable;
+                // column9.SortMode = DataGridViewColumnSortMode.NotSortable;
+                // column10.SortMode = DataGridViewColumnSortMode.NotSortable;
+                // column11.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+            else if (txtRegNo.Text == "")
+            {
+
+                DataTable items = new DataTable();
+                DataRow dr;
+
+                items.Columns.Add(new DataColumn("Select", typeof(Boolean)));
+                items.Columns.Add(new DataColumn("Reg_No", typeof(string)));
+                items.Columns.Add(new DataColumn("Name", typeof(string)));
+                items.Columns.Add(new DataColumn("D.O.B", typeof(string)));
+                items.Columns.Add(new DataColumn("Degree", typeof(string)));
+                items.Columns.Add(new DataColumn("CollegeCode", typeof(string)));
+                items.Columns.Add(new DataColumn("CollegeName", typeof(string)));
+                //   items.Columns.Add(new DataColumn("Yr_Of_App", typeof(string)));
+                //   items.Columns.Add(new DataColumn("Pub_Code", typeof(string)));
+                //   items.Columns.Add(new DataColumn("Pub_Date", typeof(string)));
+                //   items.Columns.Add(new DataColumn("Patt_Exam", typeof(string)));
+                items.Columns.Add(new DataColumn("CERTIFICATE_NUMBER", typeof(string)));
+                //   sqlstr = "Select Reg_no From ALL_RES_PG_COMPLETE where ColCode='" + mCollegeCode.Text.ToString() + "' and Mid(Degree,1,1)='B' Order By Reg_No";
+
+
+                int i = Convert.ToInt32(txtRandomFrom.Text);
+
+
+                sqlstr = "Select  distinct reg_no,colcode,degree From consol_Footer_Data_final_year where ColCode='" + mCollegeCode.Text.ToString() + "'  Order By REG_NO ASC  ";
+
+                cmd = new OleDbCommand(sqlstr, clsVariables.CnnRpt);
+                OleDbDataReader Rs;
+                Rs = cmd.ExecuteReader();
+
+                while (Rs.Read())
+                {
+                    // String id = mYrOfPass.Text.ToString();
+
+                    dr = items.NewRow();
+                    dr["Select"] = true;
+                    dr["Reg_No"] = Rs["Reg_No"].ToString();
+                    //dr["Name"] = Rs["Name"].ToString();
+                    dr["Name"] = clsFunctions.Get_Where_String("GAL_MAST", "Reg_No", Rs["Reg_No"].ToString(), "Name", clsVariables.CnnReg);
+                    dr["D.O.B"] = clsFunctions.Get_Where_String("GAL_MAST", "Reg_No", Rs["Reg_No"].ToString(), "DOB", clsVariables.CnnReg);
+                    // dr["D.O.B"] = DateTime.Parse(Rs["DOB"].ToString()).ToString("dd/MM/yyyy");  
+                    dr["Degree"] = clsFunctions.Get_Where_String("Deg_Mast", "Degree", Rs["Degree"].ToString(), "Deg_Name", clsVariables.CnnReg);
+                    dr["CollegeCode"] = clsFunctions.Get_Where_String("col_Mast", "colcode", Rs["colcode"].ToString(), "COLCODE", clsVariables.CnnReg);
+                    dr["CollegeName"] = clsFunctions.Get_Where_String("col_Mast", "colcode", Rs["colcode"].ToString(), "COLNAME", clsVariables.CnnReg);
+                    //    dr["Yr_Of_App"] = clsFunctions.Get_Value("Select  Yr_Of_App from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                    //     dr["Pub_Code"] = clsFunctions.Get_Value("Select  Pub_Code from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                    //     dr["Pub_Date"] = clsFunctions.Get_Value("Select  Pub_Date from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                    //     dr["Patt_Exam"] = clsFunctions.Get_Where_String("Deg_Mast", "Degree", Rs["Degree"].ToString(), "Pattern_Exam", clsVariables.CnnReg);
+                    dr["CERTIFICATE_NUMBER"] = i.ToString();
+                    items.Rows.Add(dr);
+
+                }
+                dg.DataSource = items;
+                Rs.Close();
+                cmd.Dispose();
+
+                DataGridViewColumn column1 = dg.Columns[0];//Screen Name           
+                DataGridViewColumn column2 = dg.Columns[1];//Add        
+                column2.ReadOnly = true;
+                DataGridViewColumn column3 = dg.Columns[2];//Edit            
+                column3.ReadOnly = true;
+                DataGridViewColumn column4 = dg.Columns[3];//Delete            
+                column4.ReadOnly = true;
+                DataGridViewColumn column5 = dg.Columns[4];//View
+                column5.ReadOnly = true;
+                DataGridViewColumn column6 = dg.Columns[5];//View
+                column6.ReadOnly = true;
+                DataGridViewColumn column7 = dg.Columns[6];//View
+                column7.ReadOnly = true;
+                //  DataGridViewColumn column8 = dg.Columns[7];//View
+                //   column8.ReadOnly = true;
+                //   DataGridViewColumn column9 = dg.Columns[8];//View
+                //  column9.ReadOnly = true;
+                //  DataGridViewColumn column10 = dg.Columns[9];//View
+                // column10.ReadOnly = true;
+                ////   DataGridViewColumn column11 = dg.Columns[10];//View
+                //   column11.ReadOnly = true;
+
+
+                column1.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column2.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column3.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column4.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column5.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column6.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column7.SortMode = DataGridViewColumnSortMode.NotSortable;
+                //  column8.SortMode = DataGridViewColumnSortMode.NotSortable;
+                //  column9.SortMode = DataGridViewColumnSortMode.NotSortable;
+                //   column10.SortMode = DataGridViewColumnSortMode.NotSortable;
+                //   column11.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
+
+            else if (txtRegNo.Text != "")
+            {
+                DataSet ds1 = new DataSet();
+
+                sqlstr = "Select * From consol_Footer_Data_final_year where reg_no='" + txtRegNo.Text + "'";
+
+                // cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+
+
+                OleDbDataReader Rs;
+                OleDbDataAdapter da = new OleDbDataAdapter(sqlstr, clsVariables.CnnRpt);
+                da.Fill(ds1);
+                dg.DataSource = ds1.Tables[0];
+
+
+            }
+
+        }
+        private Boolean Verify_Selection()
+        {
+
+            foreach (DataGridViewRow Datarow in dg.Rows)
+            {
+                if (Convert.ToBoolean(Datarow.Cells["Select"].Value.ToString()) == true)
+                {
+
+                    //if (cboMSCat.Text == "Fresh Mark Sheet")
+                    // {
+                    //   sqlstr = "Select  * from Fresh_MarkSheetTaken where REG_NO='" + Datarow.Cells["Reg_No"].Value.ToString() + "'  and YR_OF_PASS='" + mYrOfPass.Text.ToString() + "'";
+                    //   //Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+                    //   cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+                    //   OleDbDataReader drReg2 = cmd.ExecuteReader();
+                    //   OleDbCommand cmdRes1 = new OleDbCommand();
+
+                    //   while (drReg2.Read())
+                    //   {
+                    //       string regno1 = Datarow.Cells["Reg_No"].Value.ToString();
+                    //       string MSTAKENDATE = mYrOfPass.Text.ToString();
+                    //       if (drReg2["Reg_no"].ToString() == regno1 & drReg2["YR_OF_PASS"].ToString() == MSTAKENDATE)
+                    //       {
+
+                    //               string Pdate = drReg2["MarkSheetTakenDate"].ToString();
+                    //               string Pdate1 = "MarkSheetTakenDate =";
+                    //               string final = Pdate1 + Pdate +  "  Reg_No=" + regno1;
+                    //               string p = "MarkSheetTaken Taken Already";
+
+                    //               MessageBox.Show(final, p);
+                    //               return false;
+
+
+                    //       } 
+
+                    //       else
+                    //           MessageBox.Show("New Record");
+                    //   } drReg2.Close(); cmd.Dispose();
+                    //  }
+                    if (cboMSCat.Text == "Duplicate Mark Sheet")
+                    {
+                        sqlstr = "Select  * from DUP_MarkSheetTaken where REG_NO='" + Datarow.Cells["Reg_No"].Value.ToString() + "' ";
+                        //Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+                        cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+                        OleDbDataReader drReg2 = cmd.ExecuteReader();
+                        OleDbCommand cmdRes1 = new OleDbCommand();
+
+                        while (drReg2.Read())
+                        {
+                            string regno1 = Datarow.Cells["Reg_No"].Value.ToString();
+                            //  string MSTAKENDATE = mYrOfPass.Text.ToString();
+                            if (drReg2["Reg_no"].ToString() == regno1)
+                            {
+
+                                string Pdate = drReg2["MarkSheetTakenDate"].ToString();
+                                string Pdate1 = "MarkSheetTakenDate =";
+                                string final = Pdate1 + Pdate + "Reg_No" + regno1;
+                                string p = "MarkSheetTaken Taken Already";
+
+                                MessageBox.Show(final, p);
+                                return true;
+
+
+
+                            }
+
+                            else
+                                MessageBox.Show("New Record");
+                        } drReg2.Close(); cmd.Dispose();
+
+                    }
+                    else if (cboMSCat.Text == "Correction Mark Sheet")
+                    {
+                        sqlstr = "Select  * from Correction_MarkSheetTaken where REG_NO='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+                        //Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+                        cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+                        OleDbDataReader drReg2 = cmd.ExecuteReader();
+                        OleDbCommand cmdRes1 = new OleDbCommand();
+
+                        while (drReg2.Read())
+                        {
+                            string regno1 = Datarow.Cells["Reg_No"].Value.ToString();
+                            //    string MSTAKENDATE = mYrOfPass.Text.ToString();
+                            if (drReg2["Reg_no"].ToString() == regno1)
+                            {
+
+                                string Pdate = drReg2["MarkSheetTakenDate"].ToString();
+                                string Pdate1 = "MarkSheetTakenDate =";
+                                string final = Pdate1 + Pdate + "Reg_No" + regno1;
+                                string p = "MarkSheetTaken Taken Already";
+
+                                MessageBox.Show(final, p);
+                                return true;
+
+
+
+                            }
+
+                            else
+                                MessageBox.Show("New Record");
+                        } drReg2.Close(); cmd.Dispose();
+
+                    }
+
+
+
+
+                }
+            }
+
+
+            return true;
+        }
+
+        private void butPreviewRpt_Click(object sender, EventArgs e)
+        {
+            if (Verify_Selection())
+            {
+                if (cboMSCat.Text == "Fresh Mark Sheet")
+                {
+
+                    Generate_Report_Data1();
+                    //  Calculate_FooterData1();
+                    // Calculate_FooterData_final_yr();
+                    MessageBox.Show("Report Successfully Generated..!");
+                    Generate_Pdf_colcode();
+                    // frmWoint_PrintPreview Preview = new frmWoint_PrintPreview();
+
+                    // Preview.Show();
+                }
+                else
+                {
+                    Generate_Report_Data1();
+                    Generate_Pdf();
+                    MessageBox.Show("Report Successfully Generated..!");
+                    // frmWoint_PrintPreview Preview1 = new frmWoint_PrintPreview();
+
+                    //  Preview1.Show();
+                }
+
+            }
+        }
+
+
+        private void Generate_Pdf()
+        {
+
+            string datenow = DateTime.Now.ToShortDateString();
+            // string datenow = DateTime.Now.ToString();
+            // string datenow = DateTime.Now.ToShortTimeString();
+            string regno = txtRegNo1.Text;
+            string corr = cboMSCat.Text;
+            string PdfPath = "type" + corr + "_reg_" + regno + "_date_" + datenow + ".doc";
+
+            DataSet dspdf = new DataSet();
+
+            OleDbDataAdapter da = new OleDbDataAdapter("Select * from Student_Info", clsVariables.CnnRpt);
+            da.Fill(dspdf, "Student_Info"); da.Dispose();
+
+            da = new OleDbDataAdapter("Select * from Print_Area", clsVariables.CnnRpt);
+            da.Fill(dspdf, "Print_Area"); da.Dispose();
+
+            LoadStudentPhotos(dspdf);
+
+            CryRepPdf.Load(clsVariables.ReportPath + "\\PG_Marksheet_Final.rpt");
+            CryRepPdf.SetDataSource(dspdf);
+            // CryRepPdf.ExportToDisk(ExportFormatType.PortableDocFormat, PdfPath);
+            CryRepPdf.ExportToDisk(ExportFormatType.WordForWindows, PdfPath);
+            // CryRepPdf.ExportToDisk(ExportFormatType.Text, PdfPath);
+            MessageBox.Show("Text Generated..!" + "\n\n" + "File Name : " + PdfPath);
+
+        }
+
+
+        private void Generate_Pdf_colcode()
+        {
+
+            string datenow = DateTime.Now.ToShortDateString();
+            // string datenow = DateTime.Now.ToString();
+            // string datenow = DateTime.Now.ToShortTimeString();
+            string COL = mCollegeCode.Text;
+            string TYPE = "FRESH";
+
+            string PdfPath = "_bulk_" + TYPE + "_colcode_" + COL + "_date_" + datenow + ".pdf";
+
+            DataSet dspdf = new DataSet();
+
+            OleDbDataAdapter da = new OleDbDataAdapter("Select * from Student_Info", clsVariables.CnnRpt);
+            da.Fill(dspdf, "Student_Info"); da.Dispose();
+
+            da = new OleDbDataAdapter("Select * from Print_Area", clsVariables.CnnRpt);
+            da.Fill(dspdf, "Print_Area"); da.Dispose();
+
+            LoadStudentPhotos(dspdf);
+
+            CryRepPdf.Load( "D:\\SemMarkSheetApp_DUIC_CBCS_FINAL\\ConsolidateMarkSheetApp\\Reports\\UG_PG_CONSOL_Marksheet_cgpa.rpt");
+            CryRepPdf.SetDataSource(dspdf);
+             CryRepPdf.ExportToDisk(ExportFormatType.PortableDocFormat, PdfPath);
+            //CryRepPdf.ExportToDisk(ExportFormatType.WordForWindows, PdfPath);
+            // CryRepPdf.ExportToDisk(ExportFormatType.Text, PdfPath);
+            MessageBox.Show("pdf Generated..!" + "\n\n" + "File Name : " + PdfPath);
+
+        }
+
+        private void LoadStudentPhotos(DataSet dspdf)
+        {
+            try
+            {
+                string logFile = Path.Combine(Application.StartupPath, "photo_debug_log.txt");
+                StringBuilder sbLog = new StringBuilder();
+                sbLog.AppendLine("=== PHOTO DIAGNOSTIC LOG " + DateTime.Now.ToString() + " ===");
+
+                if (dspdf != null && dspdf.Tables.Contains("Student_Info"))
+                {
+                    sbLog.AppendLine("Student_Info table found. Total Rows: " + dspdf.Tables["Student_Info"].Rows.Count);
+                    bool hasPhotoCol = dspdf.Tables["Student_Info"].Columns.Contains("PHOTO");
+                    sbLog.AppendLine("PHOTO column in Student_Info table: " + hasPhotoCol);
+
+                    foreach (DataRow dr in dspdf.Tables["Student_Info"].Rows)
+                    {
+                        try
+                        {
+                            string regNo = "";
+                            if (dr.Table.Columns.Contains("REGNO") && dr["REGNO"] != DBNull.Value)
+                                regNo = dr["REGNO"].ToString().Trim();
+                            else if (dr.Table.Columns.Contains("RegNo") && dr["RegNo"] != DBNull.Value)
+                                regNo = dr["RegNo"].ToString().Trim();
+                            else if (dr.Table.Columns.Contains("Reg_No") && dr["Reg_No"] != DBNull.Value)
+                                regNo = dr["Reg_No"].ToString().Trim();
+
+                            sbLog.AppendLine("\nProcessing RegNo: '" + regNo + "'");
+
+                            if (string.IsNullOrEmpty(regNo))
+                            {
+                                sbLog.AppendLine("  -> SKIP: RegNo is empty!");
+                                continue;
+                            }
+
+                            string filePath = "G://DUIC//duic_image//" + regNo + ".jpg";
+                            string filePath_jpeg = "G://DUIC//duic_image//" + regNo + ".jpeg";
+                            string filePath_JPG = "G://DUIC//duic_image//" + regNo + ".JPG";
+                            string noImagePath = "G://DUIC//duic_image//noimage.jpg";
+
+                            byte[] NoImage = null;
+                            string matchedPath = "";
+
+                            if (File.Exists(filePath))
+                            {
+                                matchedPath = filePath;
+                                using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                                {
+                                    NoImage = new byte[fs.Length];
+                                    fs.Read(NoImage, 0, Convert.ToInt32(fs.Length));
+                                }
+                            }
+                            else if (File.Exists(filePath_jpeg))
+                            {
+                                matchedPath = filePath_jpeg;
+                                using (FileStream fs = new FileStream(filePath_jpeg, FileMode.Open, FileAccess.Read))
+                                {
+                                    NoImage = new byte[fs.Length];
+                                    fs.Read(NoImage, 0, Convert.ToInt32(fs.Length));
+                                }
+                            }
+                            else if (File.Exists(filePath_JPG))
+                            {
+                                matchedPath = filePath_JPG;
+                                using (FileStream fs = new FileStream(filePath_JPG, FileMode.Open, FileAccess.Read))
+                                {
+                                    NoImage = new byte[fs.Length];
+                                    fs.Read(NoImage, 0, Convert.ToInt32(fs.Length));
+                                }
+                            }
+                            else if (File.Exists(noImagePath))
+                            {
+                                matchedPath = noImagePath + " (FALLBACK)";
+                                using (FileStream fs = new FileStream(noImagePath, FileMode.Open, FileAccess.Read))
+                                {
+                                    NoImage = new byte[fs.Length];
+                                    fs.Read(NoImage, 0, Convert.ToInt32(fs.Length));
+                                }
+                            }
+                            else
+                            {
+                                sbLog.AppendLine("  -> CRITICAL: Neither student photo nor noimage.jpg exists!");
+                            }
+
+                            if (!string.IsNullOrEmpty(matchedPath))
+                            {
+                                sbLog.AppendLine("  -> SUCCESS: Loaded from '" + matchedPath + "' | Bytes: " + (NoImage != null ? NoImage.Length : 0));
+                            }
+
+                            if (hasPhotoCol)
+                            {
+                                dr["PHOTO"] = NoImage;
+                                sbLog.AppendLine("  -> ASSIGNED dr['PHOTO'] successfully.");
+                            }
+                            else
+                            {
+                                sbLog.AppendLine("  -> ERROR: 'PHOTO' column missing in Student_Info table!");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            sbLog.AppendLine("  -> EXCEPTION on row: " + ex.Message);
+                        }
+                    }
+                }
+                else
+                {
+                    sbLog.AppendLine("CRITICAL ERROR: dspdf is null or does not contain Student_Info table!");
+                }
+
+                File.WriteAllText(logFile, sbLog.ToString());
+            }
+            catch { }
+        }
+
+
+        private void Generate_Report_Data1()
+        {
+            sqlstr = "Delete * from Student_info";
+            cmd = new OleDbCommand(sqlstr, clsVariables.CnnRpt);
+            cmd.ExecuteNonQuery(); cmd.Dispose();
+
+            sqlstr = "Delete * from Print_Area";
+            cmd = new OleDbCommand(sqlstr, clsVariables.CnnRpt);
+            cmd.ExecuteNonQuery(); cmd.Dispose();
+
+            // string temp = null;
+            // string CollegeName;
+            string month_year;
+            string Scode = null, PaperName = null;
+          //  int ExtMax = 0, ExtMin = 0, ExtObtain = 0, ExtObtain1 = 0, REV_MARK = 0, IntObtain = 0, TotObtain = 0, TOT_MAX = 0, REV_MARK1 = 0;
+            int  IntMark = 0, Total = 0, m = 0;
+            string sem = null;
+            string Result = null, regcode = null, p_code_type = null;
+            string MarksinWords = "";
+            Boolean Isnull = false;
+            int PassMark = 0;
+            string FolioNumber, temp = null;
+            string GradePoint = "";
+            string DateNow = null;
+
+            // string Yr_Of_Pass = null;
+            string dtNow = DateTime.Now.ToShortDateString();
+
+            foreach (DataGridViewRow Datarow in dg.Rows)
+            {
+                if (Convert.ToBoolean(Datarow.Cells["Select"].Value.ToString()) == true)
+                {
+                    // string yr_of_pass = mYrOfPass.Text;
+
+                    //   temp = clsFunctions.Get_Value("Select FNumber from Print_Mast where RegNo='" + Datarow.Cells["Reg_No"].Value.ToString() + "' and YR_of_APP='" + mYrOfPass.Text + "' ", clsVariables.CnnPrint);
+                    //  if (string.IsNullOrEmpty(temp))
+                    //   {
+
+                    //    FolioNumber = mYrOfPass.Text.Substring(0, 1) + mYrOfPass.Text.Substring(6, 2) + "P";
+                    //
+                    //  FolioNumber = clsFunctions.Generated_ID(clsVariables.CnnPrint, "Print_Mast", "FNumber", FolioNumber);
+                    //    DateNow = DateTime.Now.ToShortDateString();
+                    //   sqlstr = "Insert into Print_Mast(RegNo,FNumber,YR_of_APP,Date_Of_Taken) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "', '" +
+                    //           FolioNumber + "','" + yr_of_pass.ToString().Replace("-", "''") + "','" + DateNow + "')";
+                    //    cmd = new OleDbCommand(sqlstr, clsVariables.CnnPrint);
+                    //   cmd.ExecuteNonQuery(); cmd.Dispose();
+                    //  }
+                    //  else
+                    //    FolioNumber = temp;
+
+
+                    string YRMM1 = clsFunctions.Get_Value(" select max(YRMM) from yrmm where yr_comp in (select YR_OF_PASS from SM_ALL  where REG_NO='" + Datarow.Cells["Reg_No"].Value.ToString() + "')", clsVariables.CnnReg).ToString();
+
+                    // string YRMM2 = DateTime.Parse(YRMM1.ToString());
+                    //// string YRMM2 = YRMM1.ToString().ToString("DD/MM/YYYY");
+                    string YRMM2 = DateTime.Parse(YRMM1.ToString()).ToString("dd-MM-yyyy");
+
+                    string YRMM3 = clsFunctions.Get_Where_String("YRMM", "YRMM1", YRMM2, "yr_comp", clsVariables.CnnReg);
+
+
+                    string dob1 = DateTime.Parse(Datarow.Cells["D.O.B"].Value.ToString()).ToString("dd/MM/yyyy");
+
+                    sqlstr = "select * from  SM_ALL  where Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+
+                    //     sqlstr = "select t1.P_CODE,t1.reg_no,t1.m,t1.result,t1.degree,t1.YR_OF_PASS from ALL_RES_PG_COMPLETE  as t1 where t1.Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "' and t1.W_H is null and t1.YR_OF_PASS = '" + mYrOfPass.Text.ToString() + "' and  t1.P_code not in (select P_code from sm_all as t2 where t2.Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "' and t2.YR_OF_PASS = '" + mYrOfPass.Text.ToString() + "' ) ";
+                    cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+                    OleDbDataReader drReg = cmd.ExecuteReader();
+                    OleDbCommand cmdRes = new OleDbCommand();
+                    OleDbCommand cmdRes1 = new OleDbCommand();
+                    //   MessageBox.Show(sqlstr);
+
+                    while (drReg.Read())
+                    {
+                        //   string Medium = clsFunctions.Get_Where_String("gal_Mast", "reg_no", Datarow.Cells["reg_no"].Value.ToString(), "Medium", clsVariables.CnnReg);
+                        string YR_OF_COM = YRMM3;
+
+                        sqlstr = "Insert Into Student_Info(RegNo,Name,DOB,col_code,Degree,Colege_Name,YR_of_APP) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "','" + Datarow.Cells["Name"].Value.ToString().Replace("'", "''") + "','" + dob1 + "','" + Datarow.Cells["CollegeCode"].Value.ToString() + "','" +
+                             Datarow.Cells["Degree"].Value.ToString().Replace("'", "''") + "','" + Datarow.Cells["CollegeName"].Value.ToString().Replace("'", "''") + "','" + YR_OF_COM.Replace("-", "''") + "')";
+
+                        string sqltemp2 = "Select RegNo from Student_Info where RegNo='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+
+
+                        if (!Obj.isRecordExist(sqltemp2, "Student_Info"))
+                        {
+                            cmd = new OleDbCommand(sqlstr, clsVariables.CnnRpt);
+                            cmd.ExecuteNonQuery(); cmd.Dispose();
+                        }
+
+
+
+                        Scode = drReg["p_code"].ToString();
+                        string YR_OF_PASS = drReg["YR_OF_PASS"].ToString();
+                        string PartNo = drReg["Part"].ToString(); ;
+                        string Sem = drReg["Semester"].ToString();
+                        string Credit = drReg["Credit"].ToString();
+
+                        GradePoint = drReg["Gradepoint"].ToString();
+
+                        string Grade = drReg["Grade"].ToString();
+
+                        regcode = drReg["Reg_No"].ToString();
+                        string degree1 = drReg["degree"].ToString();
+
+
+                        string id = drReg["id"].ToString();
+
+                        string IntMax = drReg["MAX_INT"].ToString();
+                        string ExtMax = drReg["MAX_MARK"].ToString();
+                        string IntObtain = drReg["INT_MARK"].ToString();
+                        string ExtObtain = drReg["EXT_MARK"].ToString();
+
+                        string TOTAL = drReg["TOTAL"].ToString();
+                        string TOTAL_MAX = drReg["TOTAL_MAX"].ToString();
+
+                        string RESULT = drReg["RESULT"].ToString();
+
+
+
+                        PaperName = clsFunctions.Get_Value("SELECT distinct Paper_Name from pcode where P_code='" + Scode + "'", clsVariables.CnnReg);
+
+                        if (RESULT == "P")
+                        {
+
+                            sqlstr = "Insert into Print_Area(yr_of_pass,RegNo,SubjectCode,PaperName,IntMax,ExtMax,Totalmax,IntObtain,ExtObtain,TotObtain,Result,ID,Part,Semester,Credit,Gradepoint,Grade) Values('" + YR_OF_PASS.ToString().Replace("-20", "") + "','" + Datarow.Cells["Reg_No"].Value.ToString() + "','" + Scode + "','" + PaperName.Replace("'", "''") + "','" + IntMax + "','" + ExtMax + "','" + TOTAL_MAX + "','" + IntObtain + "','" + ExtObtain + "', '" + TOTAL + "','" + RESULT + "','" + id + "','" +
+                           PartNo + "','" + Sem + "','" + Credit + "','" + GradePoint + "','" + Grade + "')";
+
+                            sqlstr1 = "Insert into CONSOL_TAKEN (REG_NO,NAME,COLCODE,DEGREE,YR_COMP,CER_NO,F_DATE) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "','" + Datarow.Cells["Name"].Value.ToString().Replace("'", "''") + "','" + Datarow.Cells["collegecode"].Value.ToString() + "','" + degree1 + "','" + YR_OF_COM + "','" + Datarow.Cells["CERTIFICATE_NUMBER"].Value.ToString() + "','" + dtNow + "')";
+
+
+                            string sqltemp = "Select RegNo,SubjectCode from Print_Area where RegNo='" + Datarow.Cells["Reg_No"].Value.ToString() +
+                                       "' and SubjectCode='" + Scode + "' ";
+
+
+                            if (!Obj.isRecordExist(sqltemp, "Print_area"))
+                            {
+                                cmdRes = new OleDbCommand(sqlstr, clsVariables.CnnRpt);
+                                cmdRes.ExecuteNonQuery();
+                                cmdRes.Dispose();
+                            }
+                            ///  string sqltemp1 = "Select Reg_No from CONSOL_TAKEN where Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "' ";
+                            string sqltemp3 = "Select Reg_No from CONSOL_TAKEN where Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+
+
+                            if (!Obj.isRecordExist(sqltemp3, "CONSOL_TAKEN"))
+                            {
+                                cmd = new OleDbCommand(sqlstr1, clsVariables.CnnRpt);
+                                cmd.ExecuteNonQuery(); cmd.Dispose();
+                            }
+
+                            ///   if (!Obj.isRecordExist1(sqltemp1,"CONSOL_TAKEN"))
+                            ///     {
+                            //   cmdRes1 = new OleDbCommand(sqlstr1,clsVariables.CnnRpt);
+                            //   cmdRes1.ExecuteNonQuery();
+                            //  cmdRes1.Dispose();
+                            ///    }
+                        }
+                    }
+
+                    drReg.Close(); cmd.Dispose();
+                    //} drReg1.Close(); cmd.Dispose();
+
+                }
+                //Calculate_FooterData();
+            }
+        }
+
+        private void butSelectAll1_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow Datarow in dg.Rows)
+            { Datarow.Cells["Select"].Value = true; }
+        }
+
+        private void butUncheck1_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow Datarow in dg.Rows)
+            { Datarow.Cells["Select"].Value = false; }
+        }
+
+        private void Show_Click(object sender, EventArgs e)
+        {
+            Load_Dg1();
+        }
+
+
+        private void Load_Dg1()
+        {
+
+
+            int i = Convert.ToInt32(txtRandomFrom.Text);
+
+            foreach (DataGridViewRow Datarow in dg.Rows)
+            {
+                //  DataTable items = new DataTable();
+                //  DataRow dr;
+                //   items.Columns.Add(new DataColumn("CERTIFICATE_NUMBER", typeof(string)));
+                if (Convert.ToBoolean(Datarow.Cells["Select"].Value.ToString()) == true)
+                {
+
+                    Datarow.Cells["CERTIFICATE_NUMBER"].Value = txtfolioStart.Text + i.ToString();
+                    i = i + 1;
+
+                }
+                //   DataGridViewColumn column8 = dg.Columns[7];//View
+                //////  column8.ReadOnly = true;
+
+            }
+        }
+
+        private void Generate_ACK()
+        {
+            string sqlstr1 = "Delete * from ack_db";
+            cmd = new OleDbCommand(sqlstr1, clsVariables.CnnReg);
+            cmd.ExecuteNonQuery(); cmd.Dispose();
+
+
+
+            foreach (DataGridViewRow Datarow in dg.Rows)
+            {
+                if (Convert.ToBoolean(Datarow.Cells["Select"].Value.ToString()) == true)
+                {
+                    string TODAY_DATE = DateTime.Now.ToShortDateString();
+                    string DEGREE1 = clsFunctions.Get_Where_String("Deg_Mast", "Deg_Name", Datarow.Cells["DEGREE"].Value.ToString(), "DEGREE", clsVariables.CnnReg);
+
+                    sqlstr = "Insert into ack_db(REG_NO,NAME,DOB,DEGREE,CER_NO,COLCODE,ACK_DATE) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "', '" + Datarow.Cells["NAME"].Value.ToString() + "','" + Datarow.Cells["D.O.B"].Value.ToString() + "','" + DEGREE1 + "','" + Datarow.Cells["CERTIFICATE_NUMBER"].Value.ToString() + "','" + Datarow.Cells["CollegeCode"].Value.ToString() + "','" + TODAY_DATE + "')";
+                    cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+                    cmd.ExecuteNonQuery(); cmd.Dispose();
+
+                    sqlstr = "Insert into ack_db_ALL(REG_NO,NAME,DOB,DEGREE,CER_NO,COLCODE,ACK_DATE) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "', '" + Datarow.Cells["NAME"].Value.ToString() + "','" + Datarow.Cells["D.O.B"].Value.ToString() + "','" + DEGREE1 + "','" + Datarow.Cells["CERTIFICATE_NUMBER"].Value.ToString() + "','" + Datarow.Cells["CollegeCode"].Value.ToString() + "','" + TODAY_DATE + "')";
+                    cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+                    cmd.ExecuteNonQuery(); cmd.Dispose();
+
+                }
+
+            }
+            MessageBox.Show("ACK UPDATED");
+
+        }
+
+        private void butACK_Click(object sender, EventArgs e)
+        {
+            Generate_ACK();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            DataTable items = new DataTable();
+            DataRow dr;
+
+            items.Columns.Add(new DataColumn("Select", typeof(Boolean)));
+            items.Columns.Add(new DataColumn("Reg_No", typeof(string)));
+            items.Columns.Add(new DataColumn("Name", typeof(string)));
+            items.Columns.Add(new DataColumn("D.O.B", typeof(string)));
+            items.Columns.Add(new DataColumn("Degree", typeof(string)));
+            items.Columns.Add(new DataColumn("CollegeCode", typeof(string)));
+            items.Columns.Add(new DataColumn("CollegeName", typeof(string)));
+            items.Columns.Add(new DataColumn("CERTIFICATE_NUMBER", typeof(string)));
+
+
+
+            // int i = Convert.ToInt32(txtRandomFrom.Text);
+            sqlstr = "Select distinct REG_NO,DEGREE,COLCODE From LOAD_BULK GROUP BY REG_NO,DEGREE,COLCODE ORDER BY DEGREE,COLCODE";
+            // sqlstr = "Select  distinct reg_no From NO_DUE_BULK GROUP BY DEGREE";
+            cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
+            OleDbDataReader Rs;
+            Rs = cmd.ExecuteReader();
+
+            while (Rs.Read())
+            {
+                dr = items.NewRow();
+                dr["Select"] = true;
+                dr["Reg_No"] = Rs["Reg_No"].ToString();
+                //dr["Name"] = Rs["Name"].ToString();
+                dr["Name"] = clsFunctions.Get_Where_String("GAL_MAST", "Reg_No", Rs["Reg_No"].ToString(), "Name", clsVariables.CnnReg);
+                dr["D.O.B"] = clsFunctions.Get_Where_String("GAL_MAST", "Reg_No", Rs["Reg_No"].ToString(), "DOB", clsVariables.CnnReg);
+                // dr["D.O.B"] = DateTime.Parse(Rs["DOB"].ToString()).ToString("dd/MM/yyyy");  
+                dr["Degree"] = clsFunctions.Get_Where_String("Deg_Mast", "Degree", Rs["Degree"].ToString(), "Deg_Name", clsVariables.CnnReg);
+                dr["CollegeCode"] = clsFunctions.Get_Where_String("col_Mast", "colcode", Rs["colcode"].ToString(), "COLCODE", clsVariables.CnnReg);
+                dr["CollegeName"] = clsFunctions.Get_Where_String("col_Mast", "colcode", Rs["colcode"].ToString(), "COLNAME", clsVariables.CnnReg);
+                //   dr["Yr_Of_App"] = clsFunctions.Get_Value("Select  Yr_Of_App from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                //    dr["Pub_Code"] = clsFunctions.Get_Value("Select  Pub_Code from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                //   dr["Pub_Date"] = clsFunctions.Get_Value("Select  Pub_Date from Pub_Code where Yr_Of_PASS='" + id + "'", clsVariables.CnnReg).ToString();
+                //    dr["Patt_Exam"] = clsFunctions.Get_Where_String("Deg_Mast", "Degree", Rs["Degree"].ToString(), "Pattern_Exam", clsVariables.CnnReg);
+                dr["CERTIFICATE_NUMBER"] = "0";
+                items.Rows.Add(dr);
+
+            }
+            dg.DataSource = items;
+            Rs.Close();
+            cmd.Dispose();
+
+            DataGridViewColumn column1 = dg.Columns[0];//Screen Name           
+            DataGridViewColumn column2 = dg.Columns[1];//Add        
+            column2.ReadOnly = true;
+            DataGridViewColumn column3 = dg.Columns[2];//Edit            
+            column3.ReadOnly = true;
+            DataGridViewColumn column4 = dg.Columns[3];//Delete            
+            column4.ReadOnly = true;
+            DataGridViewColumn column5 = dg.Columns[4];//View
+            column5.ReadOnly = true;
+            DataGridViewColumn column6 = dg.Columns[5];//View
+            column6.ReadOnly = true;
+            DataGridViewColumn column7 = dg.Columns[6];//View
+            column7.ReadOnly = true;
+            DataGridViewColumn column8 = dg.Columns[7];//View
+            column8.ReadOnly = true;
+
+
+            column1.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column2.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column3.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column4.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column5.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column6.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column7.SortMode = DataGridViewColumnSortMode.NotSortable;
+            column8.SortMode = DataGridViewColumnSortMode.NotSortable;
+        }
+
+    }
+
+
+
+
+}
