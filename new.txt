@@ -410,6 +410,9 @@ namespace ConsolidateMarkSheetApp
 
             OleDbDataAdapter da = new OleDbDataAdapter("Select * from Student_Info", clsVariables.CnnRpt);
             da.Fill(dspdf, "Student_Info"); da.Dispose();
+            // Add binary image column for Crystal Reports to render actual photo
+            if (!dspdf.Tables["Student_Info"].Columns.Contains("PHOTO_IMAGE"))
+                dspdf.Tables["Student_Info"].Columns.Add("PHOTO_IMAGE", typeof(byte[]));
 
             da = new OleDbDataAdapter("Select * from Print_Area", clsVariables.CnnRpt);
             da.Fill(dspdf, "Print_Area"); da.Dispose();
@@ -441,6 +444,9 @@ namespace ConsolidateMarkSheetApp
 
             OleDbDataAdapter da = new OleDbDataAdapter("Select * from Student_Info", clsVariables.CnnRpt);
             da.Fill(dspdf, "Student_Info"); da.Dispose();
+            // Add binary image column for Crystal Reports to render actual photo
+            if (!dspdf.Tables["Student_Info"].Columns.Contains("PHOTO_IMAGE"))
+                dspdf.Tables["Student_Info"].Columns.Add("PHOTO_IMAGE", typeof(byte[]));
 
             da = new OleDbDataAdapter("Select * from Print_Area", clsVariables.CnnRpt);
             da.Fill(dspdf, "Print_Area"); da.Dispose();
@@ -453,6 +459,7 @@ namespace ConsolidateMarkSheetApp
             //CryRepPdf.ExportToDisk(ExportFormatType.WordForWindows, PdfPath);
             // CryRepPdf.ExportToDisk(ExportFormatType.Text, PdfPath);
             MessageBox.Show("pdf Generated..!" + "\n\n" + "File Name : " + PdfPath);
+
 
         }
 
@@ -544,9 +551,16 @@ namespace ConsolidateMarkSheetApp
                                 sbLog.AppendLine("  -> SUCCESS: Loaded from '" + matchedPath + "' | Bytes: " + (NoImage != null ? NoImage.Length : 0));
                             }
 
-                            // Assign the full image file path string to 'photo' column for Crystal Reports Graphic Location
-                            dr["photo"] = matchedPath;
-                            sbLog.AppendLine("  -> ASSIGNED dr['photo'] (String File Path) = " + matchedPath);
+                            // Assign binary image bytes to PHOTO_IMAGE column for Crystal Reports
+                            if (dr.Table.Columns.Contains("PHOTO_IMAGE"))
+                            {
+                                dr["PHOTO_IMAGE"] = (object)NoImage ?? DBNull.Value;
+                                sbLog.AppendLine("  -> ASSIGNED dr['PHOTO_IMAGE'] (byte[] Binary) successfully.");
+                            }
+                            else
+                            {
+                                sbLog.AppendLine("  -> WARNING: PHOTO_IMAGE column not found in DataTable!");
+                            }
                         }
                         catch (Exception ex)
                         {
