@@ -544,15 +544,22 @@ namespace ConsolidateMarkSheetApp
                                 sbLog.AppendLine("  -> SUCCESS: Loaded from '" + matchedPath + "' | Bytes: " + (NoImage != null ? NoImage.Length : 0));
                             }
 
-                            if (hasPhotoCol)
+                            // 1. If lower-case 'photo' string column exists (from ReportDB.mdb), assign file path string
+                            if (dr.Table.Columns.Contains("photo"))
                             {
-                                dr["PHOTO"] = NoImage;
-                                sbLog.AppendLine("  -> ASSIGNED dr['PHOTO'] successfully.");
+                                dr["photo"] = matchedPath;
+                                sbLog.AppendLine("  -> ASSIGNED dr['photo'] (String Path) = " + matchedPath);
                             }
-                            else
+
+                            // 2. Add 'PHOTO' (byte[] array) column if not present so binary images work
+                            if (!dr.Table.Columns.Contains("PHOTO"))
                             {
-                                sbLog.AppendLine("  -> ERROR: 'PHOTO' column missing in Student_Info table!");
+                                dr.Table.Columns.Add("PHOTO", typeof(byte[]));
+                                sbLog.AppendLine("  -> ADDED 'PHOTO' column of type byte[] to DataTable.");
                             }
+
+                            dr["PHOTO"] = NoImage;
+                            sbLog.AppendLine("  -> ASSIGNED dr['PHOTO'] (byte[] Binary Data) successfully.");
                         }
                         catch (Exception ex)
                         {
