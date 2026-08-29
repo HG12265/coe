@@ -641,7 +641,7 @@ namespace ConsolidateMarkSheetApp
 
                     string dob1 = DateTime.Parse(Datarow.Cells["D.O.B"].Value.ToString()).ToString("dd/MM/yyyy");
 
-                    sqlstr = "select * from  SM_ALL  where Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
+                    sqlstr = "select * from  SM_ALL  where Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "' ORDER BY Semester, id";
 
                     //     sqlstr = "select t1.P_CODE,t1.reg_no,t1.m,t1.result,t1.degree,t1.YR_OF_PASS from ALL_RES_PG_COMPLETE  as t1 where t1.Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "' and t1.W_H is null and t1.YR_OF_PASS = '" + mYrOfPass.Text.ToString() + "' and  t1.P_code not in (select P_code from sm_all as t2 where t2.Reg_No='" + Datarow.Cells["Reg_No"].Value.ToString() + "' and t2.YR_OF_PASS = '" + mYrOfPass.Text.ToString() + "' ) ";
                     cmd = new OleDbCommand(sqlstr, clsVariables.CnnReg);
@@ -655,8 +655,8 @@ namespace ConsolidateMarkSheetApp
                         //   string Medium = clsFunctions.Get_Where_String("gal_Mast", "reg_no", Datarow.Cells["reg_no"].Value.ToString(), "Medium", clsVariables.CnnReg);
                         string YR_OF_COM = YRMM3;
 
-                        sqlstr = "Insert Into Student_Info(RegNo,Name,DOB,col_code,Degree,Colege_Name,YR_of_APP) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "','" + Datarow.Cells["Name"].Value.ToString().Replace("'", "''") + "','" + dob1 + "','" + Datarow.Cells["CollegeCode"].Value.ToString() + "','" +
-                             Datarow.Cells["Degree"].Value.ToString().Replace("'", "''") + "','" + Datarow.Cells["CollegeName"].Value.ToString().Replace("'", "''") + "','" + YR_OF_COM.Replace("-", "''") + "')";
+                        sqlstr = "Insert Into Student_Info(RegNo,Name,DOB,col_code,Degree,Colege_Name,YR_of_APP,AADHAAR_NO) Values('" + Datarow.Cells["Reg_No"].Value.ToString() + "','" + Datarow.Cells["Name"].Value.ToString().Replace("'", "''") + "','" + dob1 + "','" + Datarow.Cells["CollegeCode"].Value.ToString() + "','" +
+                             Datarow.Cells["Degree"].Value.ToString().Replace("'", "''") + "','" + Datarow.Cells["CollegeName"].Value.ToString().Replace("'", "''") + "','" + YR_OF_COM.Replace("-", "''") + "','" + Datarow.Cells["AADHAAR_NO"].Value.ToString().Replace("'", "''") + "')";
 
                         string sqltemp2 = "Select RegNo from Student_Info where RegNo='" + Datarow.Cells["Reg_No"].Value.ToString() + "'";
 
